@@ -8,8 +8,11 @@ namespace FileCryptWinApp
     class FCrypt
     {
         // declaration & instantiation of initialization vector
-        static byte[] initVector = new byte[] { 0x01, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 
-                                     0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
+//        static byte[] initVector = new byte[] { 0x01, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 
+//                                     0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
+
+        static byte[] initVector = new byte[] { };
+									 
         static SymmetricAlgorithm sa;
 
         public static void CryptAlgInit() // instantiation the algorithm of encryption
@@ -19,6 +22,13 @@ namespace FileCryptWinApp
             sa.KeySize = Form1.keySize ;     //size of cipher key: 128, 192 or 256
         }
 
+		public static string Reverse( string s )
+		{
+			char[] charArray = s.ToCharArray();
+			Array.Reverse( charArray );
+			return new string( charArray );
+		}
+		
         public static void Encrypt(string Filename, string password, string DestFname)
         {
             byte[] data;      // data to be encrypted
@@ -27,8 +37,19 @@ namespace FileCryptWinApp
             CryptAlgInit();
 
             // instantiation of cryptotransform according to algorithm of encryption parameters and IV
-            ICryptoTransform ct = sa.CreateEncryptor(
-                (new PasswordDeriveBytes(password, null)).GetBytes(16), initVector);
+			//Key
+			byte[] key = (new PasswordDeriveBytes(password, null)).GetBytes(sa.KeySize/8);
+			//initialization vector:
+			byte[] bytes = SHA256.Create().ComputeHash(new MemoryStream((new PasswordDeriveBytes(Reverse(password), null)).GetBytes(sa.KeySize/8)));
+			byte[] iv = new byte[sa.KeySize/8];
+			Array.Copy(bytes, iv, iv.Length);
+			
+//			Console.WriteLine("key.Length"+key.Length+", iv.Length"+iv.Length);	//this available, if compilation without -target:winexe
+
+//            ICryptoTransform ct = sa.CreateEncryptor(
+//                (new PasswordDeriveBytes(password, null)).GetBytes(16), initVector);
+
+            ICryptoTransform ct = sa.CreateEncryptor(key, iv);
 
             // reading data from file to "data" variable through BinaryReader
             using (FileStream fs = new FileStream(Filename, FileMode.Open, FileAccess.Read, FileShare.Read, 1000))
@@ -96,8 +117,18 @@ namespace FileCryptWinApp
         {
             CryptAlgInit();
            
-            ICryptoTransform ct = sa.CreateDecryptor(
-                (new PasswordDeriveBytes(password, null)).GetBytes(16), initVector);
+			//Key
+			byte[] key = (new PasswordDeriveBytes(password, null)).GetBytes(sa.KeySize/8);
+			//initialization vector:
+			byte[] bytes = SHA256.Create().ComputeHash(new MemoryStream((new PasswordDeriveBytes(Reverse(password), null)).GetBytes(sa.KeySize/8)));
+			byte[] iv = new byte[sa.KeySize/8];
+			Array.Copy(bytes, iv, iv.Length);
+			
+//			Console.WriteLine("key.Length"+key.Length+", iv.Length"+iv.Length);	//this available, if compilation without -target:winexe
+
+//            ICryptoTransform ct = sa.CreateDecryptor(
+//                (new PasswordDeriveBytes(password, null)).GetBytes(16), initVector);
+            ICryptoTransform ct = sa.CreateDecryptor(key, iv);
 
             MemoryStream ms = new MemoryStream(data);
             return new CryptoStream(ms, ct, CryptoStreamMode.Read);
