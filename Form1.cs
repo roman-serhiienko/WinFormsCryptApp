@@ -105,9 +105,22 @@ namespace FileCryptWinApp
 
         private void btnOpenForEncrypt_Click(object sender, EventArgs e)
         {
-            if (openFileDialogEncr.ShowDialog() == DialogResult.OK)
-                sourceFileName = openFileDialogEncr.FileName;
-            lblFileToEncName.Text = "File is chosen!";
-        }
+			try
+			{
+				OpenFileDialog openFileDialogEncr = new OpenFileDialog();
+				if (openFileDialogEncr.ShowDialog() == DialogResult.OK)
+				{
+					sourceFileName = openFileDialogEncr.FileName;
+					System.IO.StreamReader reader = System.IO.File.OpenText(openFileDialogEncr.FileName);
+					string s = reader.ReadToEnd();
+					reader.Close();
+					lblFileToEncName.Text = "File is chosen!";
+				}
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show("Error:" + ex.Message);
+			}
+		}
     }
 }

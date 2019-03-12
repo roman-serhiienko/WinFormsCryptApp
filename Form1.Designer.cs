@@ -114,6 +114,7 @@
             // 
             this.cBoxChainMode.Items.AddRange(new object[] {
             "Please select",
+            "ECB",
             "CBC",
             "CFB",
             "CTS",
