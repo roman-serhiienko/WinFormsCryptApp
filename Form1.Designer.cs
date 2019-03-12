@@ -118,7 +118,6 @@
             "CBC",
             "CFB",
             "CTS",
-            "ECB",
             "OFB"});
             this.cBoxChainMode.Location = new System.Drawing.Point(131, 54);
             this.cBoxChainMode.Name = "cBoxChainMode";
