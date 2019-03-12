@@ -50,7 +50,7 @@
             this.btnOpenForEncrypt.Name = "btnOpenForEncrypt";
             this.btnOpenForEncrypt.Size = new System.Drawing.Size(162, 23);
             this.btnOpenForEncrypt.TabIndex = 0;
-            this.btnOpenForEncrypt.Text = "Choose file to encrypt";
+            this.btnOpenForEncrypt.Text = "Choose file";
             this.btnOpenForEncrypt.UseVisualStyleBackColor = true;
             this.btnOpenForEncrypt.Click += new System.EventHandler(this.btnOpenForEncrypt_Click);
             // 
