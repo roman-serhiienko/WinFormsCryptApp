@@ -95,6 +95,21 @@ namespace FileCryptWinApp
                         };
                 }
 
+                /// <summary>
+                /// Generate random byte array
+                /// </summary>
+                /// <param name="length">array length</param>
+                /// <returns>Random byte array</returns>
+                private static byte[] GenerateRandom(int length)
+                {
+                        byte[] bytes = new byte[length];
+                        using (RNGCryptoServiceProvider random = new RNGCryptoServiceProvider())
+                        {
+                                random.GetBytes(bytes);
+                        }
+                        return bytes;
+                }
+
                 private string SHA256_hash(string data){                                                      //sha256 hash from string - as string
                         //calculate hash
                         byte[] sha256_bytes = SHA256Managed.Create().ComputeHash(new UTF8Encoding(true).GetBytes(data));                //sha256 bytes
@@ -348,7 +363,7 @@ namespace FileCryptWinApp
                                 System.Threading.Thread.Sleep(timeout);
                                 SetStatus(this.lblStatus.Text+"You don't have the private key! ");
                                 System.Threading.Thread.Sleep(timeout);
-                                SetStatus(this.lblStatus.Text+"You can encrypt keyfile only, or delete this pub! ");	//only for encrypt
+                                SetStatus(this.lblStatus.Text+"You can encrypt keyfile only, or delete this pub! "); //only for encrypt
                                 System.Threading.Thread.Sleep(timeout);
                         }
                         else{                                                                                        //else
@@ -372,7 +387,15 @@ namespace FileCryptWinApp
                                 
                                 this.password = pass;                                                                //set password
                                 
-                                if(                File.Exists(encrypted_key_iv_file)                                //if encrypted key_IV exists
+                                if(pass=="GenerateRandom"){                                                          //if need to GenerateRandom key and iv
+                                        SetStatus(this.lblStatus.Text+"Generate key and vector randomly! ");
+                                        System.Threading.Thread.Sleep(timeout);
+                                        CryptAlgInit();                                                              //init this
+                                        this.key = GenerateRandom(sa.KeySize/8);                                     //generate random AES Key
+                                        this.iv = GenerateRandom(sa.BlockSize/8);                                    //generate random AES IV
+                                        SetStatus(this.lblStatus.Text+"AES Key and IV - generated randomly! ");
+                                        System.Threading.Thread.Sleep(timeout);
+                                }else if(                File.Exists(encrypted_key_iv_file)                  //if encrypted key_IV exists
                                         &&        File.Exists(priv_file)                                             //and if priv exists
                                         &&        (this.password == this.keyfiles_pass)                              //and if need to load keyfile
                                 ){        
@@ -483,7 +506,8 @@ namespace FileCryptWinApp
 
                                         SetStatus(this.lblStatus.Text+"Done! ");
                                         System.Threading.Thread.Sleep(timeout);
-                                }else{
+                                }
+                                else{
                                         SetStatus(this.lblStatus+"load_or_generate_and_save_AES_keys: Something else, return false... ");        //If comparison == false - error
                                         System.Threading.Thread.Sleep(timeout);                                                                  //sleep
                                         return false;
@@ -499,18 +523,20 @@ namespace FileCryptWinApp
                                 //if (!File.Exists(key_iv_file))//if keyfile not exists
                                 //{Just uncomment doc.Save(key_iv_file); in CreateEncryptionInfoXml}
                                 //else
-                                if (!File.Exists(encrypted_key_iv_file))                                             //if encrypted keyfile not exists
+                                if (!File.Exists(encrypted_key_iv_file) || (pass=="GenerateRandom"))                 //if encrypted keyfile not exists or key and iv generated randomly
                                 {
+                                        if(pass!="GenerateRandom"){
                                                 SetStatus(this.lblStatus.Text+"Encrypted keyfile not found! ");
                                                 System.Threading.Thread.Sleep(timeout);
-                                                SetStatus(this.lblStatus.Text+"Try to save it! ");
-                                                System.Threading.Thread.Sleep(timeout);
-                                                //doc.Save(key_iv_file); commented in CreateEncryptionInfoXml method, so KeyIV will be saved after RSA-encryption.
-                                                load_or_generate_and_save_RSA_keys();                                 //load or generate and save RSA keys.
+                                        }
+                                        SetStatus(this.lblStatus.Text+"Try to save it! ");
+                                        System.Threading.Thread.Sleep(timeout);
+                                        //doc.Save(key_iv_file); commented in CreateEncryptionInfoXml method, so KeyIV will be saved after RSA-encryption.
+                                        load_or_generate_and_save_RSA_keys();                                 //load or generate and save RSA keys.
                                                 
-                                                //byte[] key_iv_xml = new UTF8Encoding(true).GetBytes(key_iv);        //utf-8 encoded XML -> to bytes. This no need, if xml will not be writed without encryption.
+                                        //byte[] key_iv_xml = new UTF8Encoding(true).GetBytes(key_iv);        //utf-8 encoded XML -> to bytes. This no need, if xml will not be writed without encryption.
 
-                                                string template =                                                     //Create template for encrypted xml keyfile.
+                                        string template =                                                     //Create template for encrypted xml keyfile.
                                                                 "<EncryptedEncryptionInfo>"
                                                         +                "<KeysEncryptionAlgorithm>"
                                                         +                "</KeysEncryptionAlgorithm>"
@@ -524,11 +550,11 @@ namespace FileCryptWinApp
                                                         +                "</HMACSHA256>"
                                                         +                "<SHA256/>"
                                                         +        "</EncryptedEncryptionInfo>"
-                                                ;
+                                        ;
 
-                                                XDocument doc2 = XDocument.Parse(template);                                   //parse this and fill values
+                                        XDocument doc2 = XDocument.Parse(template);                                   //parse this and fill values
                                                 
-                                                doc2.Descendants("EncryptedEncryptionInfo").Single()
+                                        doc2.Descendants("EncryptedEncryptionInfo").Single()
                                                 .Descendants("KeysEncryptionAlgorithm").Single()
                                                 .Value = "RSA "+bitlength+" bits.";                                           //RSA bitlength -> to XML
                                                 
@@ -536,60 +562,60 @@ namespace FileCryptWinApp
                                                 string encrypted_key = Convert.ToBase64String(rsa.Encrypt(key, false));       //RSA encrypted AES Key
                                                 //Console.WriteLine("encrypted_key (base64 string): "+encrypted_key);
                                                 
-                                                doc2.Descendants("EncryptedEncryptionInfo").Single()
+                                        doc2.Descendants("EncryptedEncryptionInfo").Single()
                                                 .Descendants("EncryptedAESKeyValue").Single()
                                                 .Descendants("EncryptedKey").Single()
                                                 .Value = encrypted_key;                                                       //-> to XML
                                                 
-                                                //Console.WriteLine("encrypted Key - writted.");
+                                        //Console.WriteLine("encrypted Key - writted.");
                                                 
-                                                string encrypted_IV = Convert.ToBase64String(rsa.Encrypt(iv, false));         //RSA encrypted AES IV
-                                                //Console.WriteLine("encrypted_IV (base64 string): "+encrypted_IV);
+                                        string encrypted_IV = Convert.ToBase64String(rsa.Encrypt(iv, false));         //RSA encrypted AES IV
+                                        //Console.WriteLine("encrypted_IV (base64 string): "+encrypted_IV);
                                                 
-                                                doc2.Descendants("EncryptedEncryptionInfo").Single()
+                                        doc2.Descendants("EncryptedEncryptionInfo").Single()
                                                 .Descendants("EncryptedAESKeyValue").Single()
                                                 .Descendants("EncryptedIV").Single()
                                                 .Value = encrypted_IV;                                                        //-> to XML
                                                 
-                                                //Console.WriteLine("encryptedIV - writted.");
+                                        //Console.WriteLine("encryptedIV - writted.");
                                                 
-                                                doc2.Descendants("EncryptedEncryptionInfo").Single()                          //info about HMAC key
+                                        doc2.Descendants("EncryptedEncryptionInfo").Single()                          //info about HMAC key
                                                 .Descendants("HMACSHA256").Single()
                                                 .Descendants("HMACSHA256_key")
                                                 .Single().Value = "SHA256( decrypted_xml + SHA256( decrypted_xml ) );";       // -> to XML
                                                 
-                                                //Console.WriteLine("result.ToString() - writted.");
-                                                doc2.Descendants("EncryptedEncryptionInfo").Single()                          //HMAC signature
+                                        //Console.WriteLine("result.ToString() - writted.");
+                                        doc2.Descendants("EncryptedEncryptionInfo").Single()                          //HMAC signature
                                                 .Descendants("HMACSHA256").Single()
                                                 .Descendants("HMACSHA256_signature").Single()
                                                 .Value = HMAC_sig;                                                            // -> to XML
                                                 //Console.WriteLine("result.ToString() - writted.");
 
-                                                string need_to_hashing = doc2.
-                                                Descendants("EncryptedEncryptionInfo").Single()
+                                        string need_to_hashing = doc2
+                                                .Descendants("EncryptedEncryptionInfo").Single()
                                                 .Descendants("EncryptedAESKeyValue").SingleOrDefault()
                                                 .ToString();                                                                  //encrypted key and IV
                                                 
-                                                need_to_hashing = String.Concat(need_to_hashing, doc2
+                                        need_to_hashing = String.Concat(need_to_hashing, doc2
                                                 .Descendants("EncryptedEncryptionInfo").Single()
                                                 .Descendants("HMACSHA256").SingleOrDefault().ToString());                     //+ HMAC info - in one string for hashing
                                                 
-                                                string sha256_encrypted_key_IV = SHA256_hash(need_to_hashing);                //compute sha256-hash
-                                                //Console.WriteLine("..........NEED To sha256: "+need_to_hashing+"\nHash: "+sha256_encrypted_key_IV);
-                                                doc2.Descendants("EncryptedEncryptionInfo").Single()
+                                        string sha256_encrypted_key_IV = SHA256_hash(need_to_hashing);                //compute sha256-hash
+                                        //Console.WriteLine("..........NEED To sha256: "+need_to_hashing+"\nHash: "+sha256_encrypted_key_IV);
+                                        doc2.Descendants("EncryptedEncryptionInfo").Single()
                                                 .Descendants("SHA256").Single().Value = sha256_encrypted_key_IV;              //-> to XML
                                                 //Console.WriteLine("sha256_encrypted_key_IV - writted.");
 
-                                                doc2.Save(encrypted_key_iv_file);                                             //save encrypted keyfile.
+                                        doc2.Save(encrypted_key_iv_file);                                             //save encrypted keyfile.
 
-                                                //Console.WriteLine("baseString key encrypted: "+encrypted_key);
-                                                //Console.WriteLine("baseString iv encrypted: "+encrypted_IV);
+                                        //Console.WriteLine("baseString key encrypted: "+encrypted_key);
+                                        //Console.WriteLine("baseString iv encrypted: "+encrypted_IV);
 
-                                                //Console.WriteLine("Decrypted key:" + Convert.ToBase64String(rsa.Decrypt(Convert.FromBase64String(encrypted_key), false)));        //show key.
-                                                //Console.WriteLine("Decrypted key:" + Convert.ToBase64String(rsa.Decrypt(Convert.FromBase64String(encrypted_IV), false)));         //show key.
+                                        //Console.WriteLine("Decrypted key:" + Convert.ToBase64String(rsa.Decrypt(Convert.FromBase64String(encrypted_key), false)));        //show key.
+                                        //Console.WriteLine("Decrypted key:" + Convert.ToBase64String(rsa.Decrypt(Convert.FromBase64String(encrypted_IV), false)));         //show key.
                                                 
-                                                SetStatus(this.lblStatus.Text+"Encrypted key_iv - saved as "+encrypted_key_iv_file+"! ");                //Done!
-                                                System.Threading.Thread.Sleep(timeout);
+                                        SetStatus(this.lblStatus.Text+"Encrypted key_iv - saved as "+encrypted_key_iv_file+"! ");                //Done!
+                                        System.Threading.Thread.Sleep(timeout);
                                 }
 
                                 return true;        //Done.
