@@ -276,7 +276,7 @@ namespace FileCryptWinApp
                                         }
                                 }else{
                                         filename = path;                                                             //or spefied path
-                                        SetStatus(this.lblStatus.Text+"load private key from "+path+"! ");
+                                        SetStatus(this.lblStatus.Text+"Load private key from "+path+"! ");
                                 }
                                 System.Threading.Thread.Sleep(timeout);                                              //timeout
                                 System.IO.StreamReader reader = System.IO.File.OpenText(filename);                   //open this
