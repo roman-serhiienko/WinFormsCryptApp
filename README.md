@@ -3,7 +3,7 @@ Windows Forms application allows to encrypt or decrypt files, using Advansed Enc
 
 Application uses .NET library "System.Security.Cryptography" for cryptotransform initiation.
 
-it is possible to choose Block Chaining Mode (default is CBC), Key Size (default is 256 bits for default CBC-mode)
+it is possible to choose Block Chaining Mode (default is CBC), Key Size (default is 256 bits).
 
 ## Prerequisites & Installing
 The application can be run on Windows 10, Windows 7, Windows XP with .NET runtime installed.
