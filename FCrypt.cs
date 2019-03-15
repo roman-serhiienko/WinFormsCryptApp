@@ -27,7 +27,7 @@ namespace FileCryptWinApp
                 private string key_iv_file = "key_iv.xml";                                            //default filename for not encrypted xml keyfile with Key and Initialization vector
                 private string encrypted_key_iv_file = "encrypted_key_iv.xml";                        //default filename for RSA encrypted xml keyfile with AES values, SHA256-hash + HMAC signature.
                 private string keyfiles_pass = "Do_not_change_it_to_decrypt_KEY_IV_from_keyfile";     //default password to load KEY and IV from encrypted key-file (not from password), and decrypt it with RSA private key.
-                private string default_password = "YOUR_password";                                    //default password to display.
+                private string default_password = "GenerateRandom";                                    //default password to display.
                 private        byte [] key = null;                                                    //private byte array for key
                 private byte [] iv = null;                                                            //private byte array for iv
                 private string password = "";                                                         //current password string
