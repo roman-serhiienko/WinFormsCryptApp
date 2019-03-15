@@ -159,7 +159,7 @@ namespace FileCryptWinApp
                                 //Console.WriteLine("Old status: "+status);                                            //show old
                                 notifications = status.Split(new string[] { "! " }, StringSplitOptions.None);          //split this
                                 string new_status =
-                                        notifications[notifications.Length-3]+"! "+
+                                        //notifications[notifications.Length-3]+"! "+
                                         notifications[notifications.Length-2]+"! "+                                    //add to string the last notifications
                                         notifications[notifications.Length-1]
                                 ;
@@ -253,15 +253,15 @@ namespace FileCryptWinApp
                                         if (o.ShowDialog() == DialogResult.OK)
                                         {
                                                 filename = o.FileName;                                               //use selected
-                                                SetStatus(this.lblStatus.Text+"Load specified the public key! ");
+                                                SetStatus(this.lblStatus.Text+"Load specified the private key! ");
                                         }
                                         else{
                                                 filename = priv_file;                                                //or default
-                                                SetStatus(this.lblStatus.Text+"load the public from default pathway! ");
+                                                SetStatus(this.lblStatus.Text+"Load private key from default pathway! "+priv_file+"! ");
                                         }
                                 }else{
                                         filename = path;                                                             //or spefied path
-                                        SetStatus(this.lblStatus.Text+"load the public from "+path);
+                                        SetStatus(this.lblStatus.Text+"load private key from "+path+"! ");
                                 }
                                 System.Threading.Thread.Sleep(timeout);                                              //timeout
                                 System.IO.StreamReader reader = System.IO.File.OpenText(filename);                   //open this
@@ -336,7 +336,7 @@ namespace FileCryptWinApp
                                 SetStatus(this.lblStatus.Text+"Private key found - try to load it! ");
                                 System.Threading.Thread.Sleep(timeout);
                                 btnLoadPrivate_Click(priv_file);                                                     //load this
-                                btnSavePublic_Click(pub_file);                                                       //and import pub
+                                if(!File.Exists(pub_file)) btnSavePublic_Click(pub_file);                            //and import pub
                         }
                         else if(File.Exists(pub_file)){                                                              //if pub exists
                                         //wanted to load public only for encrypt, because decrypt data is possible by priv.
@@ -344,10 +344,11 @@ namespace FileCryptWinApp
                                 string s = reader.ReadToEnd();
                                 rsa.FromXmlString(s);                                                                //import this
                                 reader.Close();
-                                SetStatus(this.lblStatus.Text+"Public key loaded! "
-                                        +        "You don't have the private key! "
-                                        +        "You can encrypt only, or delete this! "                            //only for encrypt
-                                );
+                                SetStatus(this.lblStatus.Text+"Public key loaded! ");
+                                System.Threading.Thread.Sleep(timeout);
+                                SetStatus(this.lblStatus.Text+"You don't have the private key! ");
+                                System.Threading.Thread.Sleep(timeout);
+                                SetStatus(this.lblStatus.Text+"You can encrypt keyfile only, or delete this pub! ");	//only for encrypt
                                 System.Threading.Thread.Sleep(timeout);
                         }
                         else{                                                                                        //else
